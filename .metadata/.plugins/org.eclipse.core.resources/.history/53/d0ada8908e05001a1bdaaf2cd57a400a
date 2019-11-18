@@ -1,0 +1,11 @@
+package com.exmaple.demo.controllers;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+
+public class DojoController {
+
+	@RequestMapping("/new/dojo")
+	public String newNinja() {
+		return "newDojo.jsp";
+	}
+}

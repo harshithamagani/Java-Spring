@@ -1,0 +1,18 @@
+package com.example.demo.controllers;
+
+import org.springframework.stereotype.Controller;
+
+import com.example.demo.services.CategoryService;
+import com.example.demo.services.ProductService;
+
+@Controller
+public class MainController {
+
+	private final CategoryService categoryService;
+	private final ProductService productService;
+	
+	public MainController(CategoryService categoryService,ProductService productService) {
+		this.categoryService=categoryService;
+		this.productService=productService;
+	}
+}

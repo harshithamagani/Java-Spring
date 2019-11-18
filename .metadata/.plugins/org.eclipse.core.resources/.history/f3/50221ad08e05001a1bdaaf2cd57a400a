@@ -1,0 +1,21 @@
+package com.exmaple.demo.controllers;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+
+public class DojoController {
+
+	@RequestMapping("/new/dojo")
+	public String newNinja() {
+		return "newDojo.jsp";
+	}
+	
+	@RequestMapping("/")
+	public String index() {
+		return "index.jsp"; 
+	}
+	
+	@RequestMapping(value="/post/new/ninja")
+	public String postNinja() {
+		return "redirect:/";
+	}
+}

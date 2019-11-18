@@ -1,0 +1,11 @@
+package com.coding.dojo.services;
+
+import org.springframework.stereotype.Service;
+
+import com.coding.dojo.repositories.UserRepository;
+
+@Service
+public class UserService {
+
+	private final UserRepository userRepository;
+}

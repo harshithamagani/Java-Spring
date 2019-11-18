@@ -1,0 +1,22 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<div id="wrapper">
+		<form action="/index" method="post">
+			<label>Your Name:</label>
+			<input name="name" type="text" class="name">
+			<label>Dojo Location:</label>
+			<label>Favorite language:</label>
+			<label>Comment (Optional) : </label>
+			<textarea rows="4" cols="10"></textarea>
+			<input type="submit" value="Submit" name="submit">
+		</form>
+	</div>
+</body>
+</html>

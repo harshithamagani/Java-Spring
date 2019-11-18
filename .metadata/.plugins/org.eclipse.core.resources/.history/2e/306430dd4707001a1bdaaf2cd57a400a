@@ -1,0 +1,577 @@
+package com.coding.dojo.controllers;
+
+import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.coding.dojo.models.Event;
+import com.coding.dojo.models.User;
+import com.coding.dojo.services.EventService;
+import com.coding.dojo.services.UserService;
+import com.coding.dojo.validator.UserValidator;
+
+
+@Controller
+public class UserController {
+	
+	private final UserService userService;
+	private final EventService eventService;
+	private final UserValidator userValidator;
+	
+	public UserController(UserService userService,UserValidator userValidator,EventService eventService) {
+		this.userService = userService;
+		this.userValidator = userValidator;
+		this.eventService = eventService;
+	}
+	
+	@RequestMapping("/")
+	public String registerForm(@ModelAttribute("user")User user,HttpSession session) {
+		if(session.getAttribute("user") == null) {
+			System.out.println(session.getAttribute("user"));
+			return "index.jsp";
+		}
+		else {
+			return "redirect:/events";
+		}
+	}
+	
+	
+	 @RequestMapping(value="/registration", method=RequestMethod.POST)
+	    public String registerUser(@Valid @ModelAttribute("user") User user, BindingResult result, HttpSession session,RedirectAttributes redirectAttributes) {
+	        // if result has errors, return the registration page (don't worry about validations just now)
+		 userValidator.validate(user, result);
+		 if(result.hasErrors()) {
+			 System.out.println("hi error register");
+			 return "index.jsp";
+		 }
+		 if(userService.checkIfUserInDataBase(user)) {
+			 System.out.println("hi checkIfUserInDataBase");
+			 redirectAttributes.addFlashAttribute("error", "Registered user..Please login!!");
+			 return "redirect:/";
+		 }
+		 else {
+			 userService.registerUser(user);
+			 session.setAttribute("user", user.getId());
+			 return "redirect:/events";
+		 }
+	        // else, save the user in the database, save the user id in session, and redirect them to the /home route
+	    }
+	    
+	    @RequestMapping(value="/login", method=RequestMethod.POST)
+	    public String loginUser(@RequestParam("email") String email, @RequestParam("password") String password, Model model, HttpSession session,RedirectAttributes redirectAttributes) {
+	        // if the user is authenticated, save their user id in session
+	    	if(userService.authenticateUser(email, password)) {
+	    		User user = userService.findByEmail(email);
+	    		session.setAttribute("user", user.getId());
+	    		System.out.println("logged in");
+	    		return "redirect:/events";
+	    	} else {
+	    		redirectAttributes.addFlashAttribute("error", "Invalid Credentials. Please try again.");
+	    		System.out.println("error during login");
+	    		return "redirect:/";
+	    	}
+	        // else, add error messages and return the login page
+	    }
+	    
+	    @RequestMapping("/events")
+	    public String showEvents(HttpSession session, Model model,@ModelAttribute("event")Event event) {
+	        // get user from session, save them in the model and return the home page
+	    	Long user_id = (Long) session.getAttribute("user");
+	    	User user = userService.findUserById(user_id);
+	    	model.addAttribute("user", user);
+	    	return "showEvents.jsp";
+	    }
+	    
+	    
+	    @RequestMapping("/logout")
+	    public String logout(HttpSession session) {
+	        // invalidate session
+	    	session.invalidate();
+	        // redirect to login page
+	    	return "redirect:/";
+	    }
+	    
+	    @RequestMapping(value="/post/event", method = RequestMethod.POST)
+	    public String postEvent(@Valid @ModelAttribute("event")Event event,BindingResult result,HttpSession session) {
+	        // get user from session, save them in the model and return the home page
+	    	eventService.createEvent(event);
+	    	Long user_id = (Long) session.getAttribute("user");
+	    	2019-11-14 17:28:01.103  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : No active profile set, falling back to default profiles: default
+	    	2019-11-14 17:28:01.242  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data repositories in DEFAULT mode.
+	    	2019-11-14 17:28:01.251  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 9ms. Found 3 repository interfaces.
+	    	2019-11-14 17:28:01.334  INFO 95504 --- [  restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+	    	2019-11-14 17:28:01.371  WARN 95504 --- [  restartedMain] org.apache.tomcat.util.modeler.Registry  : The MBean registry cannot be disabled because it has already been initialised
+	    	2019-11-14 17:28:01.395  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+	    	2019-11-14 17:28:01.397  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+	    	2019-11-14 17:28:01.397  INFO 95504 --- [  restartedMain] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.27]
+	    	2019-11-14 17:28:01.480  INFO 95504 --- [  restartedMain] org.apache.jasper.servlet.TldScanner     : At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+	    	2019-11-14 17:28:01.481  INFO 95504 --- [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+	    	2019-11-14 17:28:01.481  INFO 95504 --- [  restartedMain] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 375 ms
+	    	2019-11-14 17:28:01.528  INFO 95504 --- [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+	    	2019-11-14 17:28:01.531  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-37 - Starting...
+	    	2019-11-14 17:28:01.554  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-37 - Start completed.
+	    	2019-11-14 17:28:01.554  INFO 95504 --- [  restartedMain] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+	    	2019-11-14 17:28:01.601  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Event (class must be instantiated by Interceptor)
+	    	2019-11-14 17:28:01.611  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Message (class must be instantiated by Interceptor)
+	    	2019-11-14 17:28:01.792  INFO 95504 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+	    	2019-11-14 17:28:01.792  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:28:01.810  INFO 95504 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+	    	2019-11-14 17:28:01.914  WARN 95504 --- [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+	    	2019-11-14 17:28:01.971  INFO 95504 --- [  restartedMain] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+	    	2019-11-14 17:28:02.091  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+	    	2019-11-14 17:28:02.092  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Started BeltReviewerApplication in 1.019 seconds (JVM running for 4321.788)
+	    	2019-11-14 17:28:02.097  INFO 95504 --- [  restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+	    	2019-11-14 17:29:10.920  INFO 95504 --- [     Thread-185] o.s.s.concurrent.ThreadPoolTaskExecutor  : Shutting down ExecutorService 'applicationTaskExecutor'
+	    	2019-11-14 17:29:10.920  INFO 95504 --- [     Thread-185] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:29:10.921  INFO 95504 --- [     Thread-185] com.zaxxer.hikari.HikariDataSource       : HikariPool-37 - Shutdown initiated...
+	    	2019-11-14 17:29:10.923  INFO 95504 --- [     Thread-185] com.zaxxer.hikari.HikariDataSource       : HikariPool-37 - Shutdown completed.
+
+	    	  .   ____          _            __ _ _
+	    	 /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+	    	( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+	    	 \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+	    	  '  |____| .__|_| |_|_| |_\__, | / / / /
+	    	 =========|_|==============|___/=/_/_/_/
+	    	 :: Spring Boot ::        (v2.2.1.RELEASE)
+
+	    	2019-11-14 17:29:11.274  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Starting BeltReviewerApplication on MacBook-Pro-2.local with PID 95504 (/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes started by harshithamagani in /Users/harshithamagani/Desktop/spring-workspace/beltReviewer)
+	    	2019-11-14 17:29:11.274  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : No active profile set, falling back to default profiles: default
+	    	2019-11-14 17:29:11.433  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data repositories in DEFAULT mode.
+	    	2019-11-14 17:29:11.446  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 13ms. Found 3 repository interfaces.
+	    	2019-11-14 17:29:11.523  INFO 95504 --- [  restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+	    	2019-11-14 17:29:11.580  WARN 95504 --- [  restartedMain] org.apache.tomcat.util.modeler.Registry  : The MBean registry cannot be disabled because it has already been initialised
+	    	2019-11-14 17:29:11.601  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+	    	2019-11-14 17:29:11.603  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+	    	2019-11-14 17:29:11.603  INFO 95504 --- [  restartedMain] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.27]
+	    	2019-11-14 17:29:11.644  INFO 95504 --- [  restartedMain] org.apache.jasper.servlet.TldScanner     : At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+	    	2019-11-14 17:29:11.644  INFO 95504 --- [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+	    	2019-11-14 17:29:11.644  INFO 95504 --- [  restartedMain] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 369 ms
+	    	2019-11-14 17:29:11.687  INFO 95504 --- [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+	    	2019-11-14 17:29:11.689  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-38 - Starting...
+	    	2019-11-14 17:29:11.717  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-38 - Start completed.
+	    	2019-11-14 17:29:11.717  INFO 95504 --- [  restartedMain] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+	    	2019-11-14 17:29:11.755  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Event (class must be instantiated by Interceptor)
+	    	2019-11-14 17:29:11.766  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Message (class must be instantiated by Interceptor)
+	    	2019-11-14 17:29:11.930  INFO 95504 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+	    	2019-11-14 17:29:11.931  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:29:11.949  INFO 95504 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+	    	2019-11-14 17:29:12.028  WARN 95504 --- [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+	    	2019-11-14 17:29:12.071  INFO 95504 --- [  restartedMain] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+	    	2019-11-14 17:29:12.144  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+	    	2019-11-14 17:29:12.148  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Started BeltReviewerApplication in 1.03 seconds (JVM running for 4391.842)
+	    	2019-11-14 17:29:12.150  INFO 95504 --- [  restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+	    	2019-11-14 17:29:24.629  INFO 95504 --- [     Thread-190] o.s.s.concurrent.ThreadPoolTaskExecutor  : Shutting down ExecutorService 'applicationTaskExecutor'
+	    	2019-11-14 17:29:24.629  INFO 95504 --- [     Thread-190] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:29:24.630  INFO 95504 --- [     Thread-190] com.zaxxer.hikari.HikariDataSource       : HikariPool-38 - Shutdown initiated...
+	    	2019-11-14 17:29:24.632  INFO 95504 --- [     Thread-190] com.zaxxer.hikari.HikariDataSource       : HikariPool-38 - Shutdown completed.
+
+	    	  .   ____          _            __ _ _
+	    	 /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+	    	( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+	    	 \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+	    	  '  |____| .__|_| |_|_| |_\__, | / / / /
+	    	 =========|_|==============|___/=/_/_/_/
+	    	 :: Spring Boot ::        (v2.2.1.RELEASE)
+
+	    	2019-11-14 17:29:25.117  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Starting BeltReviewerApplication on MacBook-Pro-2.local with PID 95504 (/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes started by harshithamagani in /Users/harshithamagani/Desktop/spring-workspace/beltReviewer)
+	    	2019-11-14 17:29:25.118  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : No active profile set, falling back to default profiles: default
+	    	2019-11-14 17:29:25.503  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data repositories in DEFAULT mode.
+	    	2019-11-14 17:29:25.513  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 9ms. Found 3 repository interfaces.
+	    	2019-11-14 17:29:25.584  INFO 95504 --- [  restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+	    	2019-11-14 17:29:25.615  WARN 95504 --- [  restartedMain] org.apache.tomcat.util.modeler.Registry  : The MBean registry cannot be disabled because it has already been initialised
+	    	2019-11-14 17:29:25.631  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+	    	2019-11-14 17:29:25.632  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+	    	2019-11-14 17:29:25.632  INFO 95504 --- [  restartedMain] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.27]
+	    	2019-11-14 17:29:25.663  INFO 95504 --- [  restartedMain] org.apache.jasper.servlet.TldScanner     : At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+	    	2019-11-14 17:29:25.664  INFO 95504 --- [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+	    	2019-11-14 17:29:25.664  INFO 95504 --- [  restartedMain] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 543 ms
+	    	2019-11-14 17:29:25.696  INFO 95504 --- [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+	    	2019-11-14 17:29:25.700  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-39 - Starting...
+	    	2019-11-14 17:29:25.716  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-39 - Start completed.
+	    	2019-11-14 17:29:25.717  INFO 95504 --- [  restartedMain] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+	    	2019-11-14 17:29:25.762  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Event (class must be instantiated by Interceptor)
+	    	2019-11-14 17:29:25.772  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Message (class must be instantiated by Interceptor)
+	    	2019-11-14 17:29:25.992  INFO 95504 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+	    	2019-11-14 17:29:25.992  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:29:26.003  INFO 95504 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+	    	2019-11-14 17:29:26.056  WARN 95504 --- [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+	    	2019-11-14 17:29:26.095  INFO 95504 --- [  restartedMain] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+	    	2019-11-14 17:29:26.198  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+	    	2019-11-14 17:29:26.198  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Started BeltReviewerApplication in 1.114 seconds (JVM running for 4405.891)
+	    	2019-11-14 17:29:26.202  INFO 95504 --- [  restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+	    	2019-11-14 17:29:53.746  INFO 95504 --- [     Thread-195] o.s.s.concurrent.ThreadPoolTaskExecutor  : Shutting down ExecutorService 'applicationTaskExecutor'
+	    	2019-11-14 17:29:53.747  INFO 95504 --- [     Thread-195] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:29:53.747  INFO 95504 --- [     Thread-195] com.zaxxer.hikari.HikariDataSource       : HikariPool-39 - Shutdown initiated...
+	    	2019-11-14 17:29:53.749  INFO 95504 --- [     Thread-195] com.zaxxer.hikari.HikariDataSource       : HikariPool-39 - Shutdown completed.
+
+	    	  .   ____          _            __ _ _
+	    	 /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+	    	( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+	    	 \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+	    	  '  |____| .__|_| |_|_| |_\__, | / / / /
+	    	 =========|_|==============|___/=/_/_/_/
+	    	 :: Spring Boot ::        (v2.2.1.RELEASE)
+
+	    	2019-11-14 17:29:54.046  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Starting BeltReviewerApplication on MacBook-Pro-2.local with PID 95504 (/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes started by harshithamagani in /Users/harshithamagani/Desktop/spring-workspace/beltReviewer)
+	    	2019-11-14 17:29:54.046  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : No active profile set, falling back to default profiles: default
+	    	2019-11-14 17:29:54.223  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data repositories in DEFAULT mode.
+	    	2019-11-14 17:29:54.236  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 13ms. Found 3 repository interfaces.
+	    	2019-11-14 17:29:54.285  INFO 95504 --- [  restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+	    	2019-11-14 17:29:54.325  WARN 95504 --- [  restartedMain] org.apache.tomcat.util.modeler.Registry  : The MBean registry cannot be disabled because it has already been initialised
+	    	2019-11-14 17:29:54.343  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+	    	2019-11-14 17:29:54.344  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+	    	2019-11-14 17:29:54.344  INFO 95504 --- [  restartedMain] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.27]
+	    	2019-11-14 17:29:54.392  INFO 95504 --- [  restartedMain] org.apache.jasper.servlet.TldScanner     : At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+	    	2019-11-14 17:29:54.393  INFO 95504 --- [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+	    	2019-11-14 17:29:54.393  INFO 95504 --- [  restartedMain] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 346 ms
+	    	2019-11-14 17:29:54.426  INFO 95504 --- [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+	    	2019-11-14 17:29:54.430  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-40 - Starting...
+	    	2019-11-14 17:29:54.447  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-40 - Start completed.
+	    	2019-11-14 17:29:54.447  INFO 95504 --- [  restartedMain] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+	    	2019-11-14 17:29:54.474  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Event (class must be instantiated by Interceptor)
+	    	2019-11-14 17:29:54.481  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Message (class must be instantiated by Interceptor)
+	    	2019-11-14 17:29:54.621  INFO 95504 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+	    	2019-11-14 17:29:54.621  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:29:54.638  INFO 95504 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+	    	2019-11-14 17:29:54.708  WARN 95504 --- [  restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'userController' defined in file [/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes/com/coding/dojo/controllers/UserController.class]: Bean instantiation via constructor failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.coding.dojo.controllers.UserController]: Constructor threw exception; nested exception is java.lang.Error: Unresolved compilation problem: 
+	    		The blank final field eventService may not have been initialized
+
+	    	2019-11-14 17:29:54.708  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:29:54.709  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-40 - Shutdown initiated...
+	    	2019-11-14 17:29:54.727  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-40 - Shutdown completed.
+	    	2019-11-14 17:29:54.730  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+	    	2019-11-14 17:29:54.741  INFO 95504 --- [  restartedMain] ConditionEvaluationReportLoggingListener : 
+
+	    	Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+	    	2019-11-14 17:29:54.761 ERROR 95504 --- [  restartedMain] o.s.boot.SpringApplication               : Application run failed
+
+	    	org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'userController' defined in file [/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes/com/coding/dojo/controllers/UserController.class]: Bean instantiation via constructor failed; nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.coding.dojo.controllers.UserController]: Constructor threw exception; nested exception is java.lang.Error: Unresolved compilation problem: 
+	    		The blank final field eventService may not have been initialized
+
+	    		at org.springframework.beans.factory.support.ConstructorResolver.instantiate(ConstructorResolver.java:312) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:293) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1358) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1204) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:557) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:517) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:323) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:222) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:321) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:202) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:879) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:878) ~[spring-context-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:550) ~[spring-context-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:141) ~[spring-boot-2.2.1.RELEASE.jar:2.2.1.RELEASE]
+	    		at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:747) [spring-boot-2.2.1.RELEASE.jar:2.2.1.RELEASE]
+	    		at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:397) [spring-boot-2.2.1.RELEASE.jar:2.2.1.RELEASE]
+	    		at org.springframework.boot.SpringApplication.run(SpringApplication.java:315) [spring-boot-2.2.1.RELEASE.jar:2.2.1.RELEASE]
+	    		at org.springframework.boot.SpringApplication.run(SpringApplication.java:1226) [spring-boot-2.2.1.RELEASE.jar:2.2.1.RELEASE]
+	    		at org.springframework.boot.SpringApplication.run(SpringApplication.java:1215) [spring-boot-2.2.1.RELEASE.jar:2.2.1.RELEASE]
+	    		at com.coding.dojo.BeltReviewerApplication.main(BeltReviewerApplication.java:10) [classes/:na]
+	    		at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:1.8.0_121]
+	    		at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[na:1.8.0_121]
+	    		at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:1.8.0_121]
+	    		at java.lang.reflect.Method.invoke(Method.java:498) ~[na:1.8.0_121]
+	    		at org.springframework.boot.devtools.restart.RestartLauncher.run(RestartLauncher.java:49) [spring-boot-devtools-2.2.1.RELEASE.jar:2.2.1.RELEASE]
+	    	Caused by: org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.coding.dojo.controllers.UserController]: Constructor threw exception; nested exception is java.lang.Error: Unresolved compilation problem: 
+	    		The blank final field eventService may not have been initialized
+
+	    		at org.springframework.beans.BeanUtils.instantiateClass(BeanUtils.java:213) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.beans.factory.support.SimpleInstantiationStrategy.instantiate(SimpleInstantiationStrategy.java:117) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		at org.springframework.beans.factory.support.ConstructorResolver.instantiate(ConstructorResolver.java:308) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		... 24 common frames omitted
+	    	Caused by: java.lang.Error: Unresolved compilation problem: 
+	    		The blank final field eventService may not have been initialized
+
+	    		at com.coding.dojo.controllers.UserController.<init>(UserController.java:29) ~[classes/:na]
+	    		at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method) ~[na:1.8.0_121]
+	    		at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62) ~[na:1.8.0_121]
+	    		at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45) ~[na:1.8.0_121]
+	    		at java.lang.reflect.Constructor.newInstance(Constructor.java:423) ~[na:1.8.0_121]
+	    		at org.springframework.beans.BeanUtils.instantiateClass(BeanUtils.java:200) ~[spring-beans-5.2.1.RELEASE.jar:5.2.1.RELEASE]
+	    		... 26 common frames omitted
+
+
+	    	  .   ____          _            __ _ _
+	    	 /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+	    	( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+	    	 \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+	    	  '  |____| .__|_| |_|_| |_\__, | / / / /
+	    	 =========|_|==============|___/=/_/_/_/
+	    	 :: Spring Boot ::        (v2.2.1.RELEASE)
+
+	    	2019-11-14 17:30:05.261  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Starting BeltReviewerApplication on MacBook-Pro-2.local with PID 95504 (/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes started by harshithamagani in /Users/harshithamagani/Desktop/spring-workspace/beltReviewer)
+	    	2019-11-14 17:30:05.261  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : No active profile set, falling back to default profiles: default
+	    	2019-11-14 17:30:05.458  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data repositories in DEFAULT mode.
+	    	2019-11-14 17:30:05.484  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 25ms. Found 3 repository interfaces.
+	    	2019-11-14 17:30:05.591  INFO 95504 --- [  restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+	    	2019-11-14 17:30:05.630  WARN 95504 --- [  restartedMain] org.apache.tomcat.util.modeler.Registry  : The MBean registry cannot be disabled because it has already been initialised
+	    	2019-11-14 17:30:05.716  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+	    	2019-11-14 17:30:05.717  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+	    	2019-11-14 17:30:05.717  INFO 95504 --- [  restartedMain] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.27]
+	    	2019-11-14 17:30:05.793  INFO 95504 --- [  restartedMain] org.apache.jasper.servlet.TldScanner     : At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+	    	2019-11-14 17:30:05.794  INFO 95504 --- [  restartedMain] o.a.c.c.C.[Tomcat-1].[localhost].[/]     : Initializing Spring embedded WebApplicationContext
+	    	2019-11-14 17:30:05.794  INFO 95504 --- [  restartedMain] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 530 ms
+	    	2019-11-14 17:30:05.842  INFO 95504 --- [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+	    	2019-11-14 17:30:05.846  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-41 - Starting...
+	    	2019-11-14 17:30:05.859  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-41 - Start completed.
+	    	2019-11-14 17:30:05.860  INFO 95504 --- [  restartedMain] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+	    	2019-11-14 17:30:05.898  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Event (class must be instantiated by Interceptor)
+	    	2019-11-14 17:30:05.909  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Message (class must be instantiated by Interceptor)
+	    	2019-11-14 17:30:06.182  INFO 95504 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+	    	2019-11-14 17:30:06.182  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:30:06.197  INFO 95504 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+	    	2019-11-14 17:30:06.245  WARN 95504 --- [  restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'userController' defined in file [/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes/com/coding/dojo/controllers/UserController.class]: Unsatisfied dependency expressed through constructor parameter 2; nested exception is org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'com.coding.dojo.services.EventService' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {}
+	    	2019-11-14 17:30:06.245  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:30:06.246  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-41 - Shutdown initiated...
+	    	2019-11-14 17:30:06.251  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-41 - Shutdown completed.
+	    	2019-11-14 17:30:06.253  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+	    	2019-11-14 17:30:06.267  INFO 95504 --- [  restartedMain] ConditionEvaluationReportLoggingListener : 
+
+	    	Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+	    	2019-11-14 17:30:06.421 ERROR 95504 --- [  restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+	    	***************************
+	    	APPLICATION FAILED TO START
+	    	***************************
+
+	    	Description:
+
+	    	Parameter 2 of constructor in com.coding.dojo.controllers.UserController required a bean of type 'com.coding.dojo.services.EventService' that could not be found.
+
+
+	    	Action:
+
+	    	Consider defining a bean of type 'com.coding.dojo.services.EventService' in your configuration.
+
+
+	    	  .   ____          _            __ _ _
+	    	 /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+	    	( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+	    	 \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+	    	  '  |____| .__|_| |_|_| |_\__, | / / / /
+	    	 =========|_|==============|___/=/_/_/_/
+	    	 :: Spring Boot ::        (v2.2.1.RELEASE)
+
+	    	2019-11-14 17:30:16.928  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Starting BeltReviewerApplication on MacBook-Pro-2.local with PID 95504 (/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes started by harshithamagani in /Users/harshithamagani/Desktop/spring-workspace/beltReviewer)
+	    	2019-11-14 17:30:16.929  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : No active profile set, falling back to default profiles: default
+	    	2019-11-14 17:30:17.096  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data repositories in DEFAULT mode.
+	    	2019-11-14 17:30:17.105  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 8ms. Found 3 repository interfaces.
+	    	2019-11-14 17:30:17.176  INFO 95504 --- [  restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+	    	2019-11-14 17:30:17.216  WARN 95504 --- [  restartedMain] org.apache.tomcat.util.modeler.Registry  : The MBean registry cannot be disabled because it has already been initialised
+	    	2019-11-14 17:30:17.237  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+	    	2019-11-14 17:30:17.238  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+	    	2019-11-14 17:30:17.238  INFO 95504 --- [  restartedMain] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.27]
+	    	2019-11-14 17:30:17.282  INFO 95504 --- [  restartedMain] org.apache.jasper.servlet.TldScanner     : At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+	    	2019-11-14 17:30:17.283  INFO 95504 --- [  restartedMain] o.a.c.c.C.[Tomcat-2].[localhost].[/]     : Initializing Spring embedded WebApplicationContext
+	    	2019-11-14 17:30:17.284  INFO 95504 --- [  restartedMain] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 353 ms
+	    	2019-11-14 17:30:17.342  INFO 95504 --- [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+	    	2019-11-14 17:30:17.345  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-42 - Starting...
+	    	2019-11-14 17:30:17.359  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-42 - Start completed.
+	    	2019-11-14 17:30:17.359  INFO 95504 --- [  restartedMain] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+	    	2019-11-14 17:30:17.397  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Event (class must be instantiated by Interceptor)
+	    	2019-11-14 17:30:17.405  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Message (class must be instantiated by Interceptor)
+	    	2019-11-14 17:30:17.749  INFO 95504 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+	    	2019-11-14 17:30:17.749  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:30:17.761  INFO 95504 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+	    	2019-11-14 17:30:17.791  WARN 95504 --- [  restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'userController' defined in file [/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes/com/coding/dojo/controllers/UserController.class]: Unsatisfied dependency expressed through constructor parameter 2; nested exception is org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'com.coding.dojo.services.EventService' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {}
+	    	2019-11-14 17:30:17.791  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:30:17.791  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-42 - Shutdown initiated...
+	    	2019-11-14 17:30:17.792  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-42 - Shutdown completed.
+	    	2019-11-14 17:30:17.793  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+	    	2019-11-14 17:30:17.797  INFO 95504 --- [  restartedMain] ConditionEvaluationReportLoggingListener : 
+
+	    	Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+	    	2019-11-14 17:30:17.853 ERROR 95504 --- [  restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+	    	***************************
+	    	APPLICATION FAILED TO START
+	    	***************************
+
+	    	Description:
+
+	    	Parameter 2 of constructor in com.coding.dojo.controllers.UserController required a bean of type 'com.coding.dojo.services.EventService' that could not be found.
+
+
+	    	Action:
+
+	    	Consider defining a bean of type 'com.coding.dojo.services.EventService' in your configuration.
+
+
+	    	  .   ____          _            __ _ _
+	    	 /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+	    	( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+	    	 \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+	    	  '  |____| .__|_| |_|_| |_\__, | / / / /
+	    	 =========|_|==============|___/=/_/_/_/
+	    	 :: Spring Boot ::        (v2.2.1.RELEASE)
+
+	    	2019-11-14 17:30:31.354  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Starting BeltReviewerApplication on MacBook-Pro-2.local with PID 95504 (/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes started by harshithamagani in /Users/harshithamagani/Desktop/spring-workspace/beltReviewer)
+	    	2019-11-14 17:30:31.354  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : No active profile set, falling back to default profiles: default
+	    	2019-11-14 17:30:31.479  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data repositories in DEFAULT mode.
+	    	2019-11-14 17:30:31.492  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 13ms. Found 3 repository interfaces.
+	    	2019-11-14 17:30:31.543  INFO 95504 --- [  restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+	    	2019-11-14 17:30:31.583  WARN 95504 --- [  restartedMain] org.apache.tomcat.util.modeler.Registry  : The MBean registry cannot be disabled because it has already been initialised
+	    	2019-11-14 17:30:31.602  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+	    	2019-11-14 17:30:31.603  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+	    	2019-11-14 17:30:31.604  INFO 95504 --- [  restartedMain] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.27]
+	    	2019-11-14 17:30:31.648  INFO 95504 --- [  restartedMain] org.apache.jasper.servlet.TldScanner     : At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+	    	2019-11-14 17:30:31.649  INFO 95504 --- [  restartedMain] o.a.c.c.C.[Tomcat-3].[localhost].[/]     : Initializing Spring embedded WebApplicationContext
+	    	2019-11-14 17:30:31.649  INFO 95504 --- [  restartedMain] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 293 ms
+	    	2019-11-14 17:30:31.702  INFO 95504 --- [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+	    	2019-11-14 17:30:31.707  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-43 - Starting...
+	    	2019-11-14 17:30:31.733  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-43 - Start completed.
+	    	2019-11-14 17:30:31.733  INFO 95504 --- [  restartedMain] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+	    	2019-11-14 17:30:31.801  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Event (class must be instantiated by Interceptor)
+	    	2019-11-14 17:30:31.818  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Message (class must be instantiated by Interceptor)
+	    	2019-11-14 17:30:32.125  INFO 95504 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+	    	2019-11-14 17:30:32.125  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:30:32.143  INFO 95504 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+	    	2019-11-14 17:30:32.182  WARN 95504 --- [  restartedMain] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'userController' defined in file [/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes/com/coding/dojo/controllers/UserController.class]: Unsatisfied dependency expressed through constructor parameter 2; nested exception is org.springframework.beans.factory.NoSuchBeanDefinitionException: No qualifying bean of type 'com.coding.dojo.services.EventService' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {}
+	    	2019-11-14 17:30:32.183  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:30:32.183  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-43 - Shutdown initiated...
+	    	2019-11-14 17:30:32.186  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-43 - Shutdown completed.
+	    	2019-11-14 17:30:32.187  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+	    	2019-11-14 17:30:32.194  INFO 95504 --- [  restartedMain] ConditionEvaluationReportLoggingListener : 
+
+	    	Error starting ApplicationContext. To display the conditions report re-run your application with 'debug' enabled.
+	    	2019-11-14 17:30:32.256 ERROR 95504 --- [  restartedMain] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+	    	***************************
+	    	APPLICATION FAILED TO START
+	    	***************************
+
+	    	Description:
+
+	    	Parameter 2 of constructor in com.coding.dojo.controllers.UserController required a bean of type 'com.coding.dojo.services.EventService' that could not be found.
+
+
+	    	Action:
+
+	    	Consider defining a bean of type 'com.coding.dojo.services.EventService' in your configuration.
+
+
+	    	  .   ____          _            __ _ _
+	    	 /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+	    	( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+	    	 \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+	    	  '  |____| .__|_| |_|_| |_\__, | / / / /
+	    	 =========|_|==============|___/=/_/_/_/
+	    	 :: Spring Boot ::        (v2.2.1.RELEASE)
+
+	    	2019-11-14 17:30:55.827  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Starting BeltReviewerApplication on MacBook-Pro-2.local with PID 95504 (/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes started by harshithamagani in /Users/harshithamagani/Desktop/spring-workspace/beltReviewer)
+	    	2019-11-14 17:30:55.827  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : No active profile set, falling back to default profiles: default
+	    	2019-11-14 17:30:55.934  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data repositories in DEFAULT mode.
+	    	2019-11-14 17:30:55.941  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 7ms. Found 3 repository interfaces.
+	    	2019-11-14 17:30:55.987  INFO 95504 --- [  restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+	    	2019-11-14 17:30:56.016  WARN 95504 --- [  restartedMain] org.apache.tomcat.util.modeler.Registry  : The MBean registry cannot be disabled because it has already been initialised
+	    	2019-11-14 17:30:56.036  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+	    	2019-11-14 17:30:56.036  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+	    	2019-11-14 17:30:56.036  INFO 95504 --- [  restartedMain] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.27]
+	    	2019-11-14 17:30:56.095  INFO 95504 --- [  restartedMain] org.apache.jasper.servlet.TldScanner     : At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+	    	2019-11-14 17:30:56.096  INFO 95504 --- [  restartedMain] o.a.c.c.C.[Tomcat-4].[localhost].[/]     : Initializing Spring embedded WebApplicationContext
+	    	2019-11-14 17:30:56.096  INFO 95504 --- [  restartedMain] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 268 ms
+	    	2019-11-14 17:30:56.135  INFO 95504 --- [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+	    	2019-11-14 17:30:56.138  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-44 - Starting...
+	    	2019-11-14 17:30:56.151  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-44 - Start completed.
+	    	2019-11-14 17:30:56.151  INFO 95504 --- [  restartedMain] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+	    	2019-11-14 17:30:56.178  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Event (class must be instantiated by Interceptor)
+	    	2019-11-14 17:30:56.188  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Message (class must be instantiated by Interceptor)
+	    	2019-11-14 17:30:56.575  INFO 95504 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+	    	2019-11-14 17:30:56.575  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:30:56.586  INFO 95504 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+	    	2019-11-14 17:30:56.663  WARN 95504 --- [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+	    	2019-11-14 17:30:56.697  INFO 95504 --- [  restartedMain] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+	    	2019-11-14 17:30:56.786  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+	    	2019-11-14 17:30:56.786  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Started BeltReviewerApplication in 0.975 seconds (JVM running for 4496.477)
+	    	2019-11-14 17:30:56.789  INFO 95504 --- [  restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+	    	2019-11-14 17:31:41.450  INFO 95504 --- [     Thread-200] o.s.s.concurrent.ThreadPoolTaskExecutor  : Shutting down ExecutorService 'applicationTaskExecutor'
+	    	2019-11-14 17:31:41.450  INFO 95504 --- [     Thread-200] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:31:41.451  INFO 95504 --- [     Thread-200] com.zaxxer.hikari.HikariDataSource       : HikariPool-44 - Shutdown initiated...
+	    	2019-11-14 17:31:41.453  INFO 95504 --- [     Thread-200] com.zaxxer.hikari.HikariDataSource       : HikariPool-44 - Shutdown completed.
+
+	    	  .   ____          _            __ _ _
+	    	 /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+	    	( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+	    	 \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+	    	  '  |____| .__|_| |_|_| |_\__, | / / / /
+	    	 =========|_|==============|___/=/_/_/_/
+	    	 :: Spring Boot ::        (v2.2.1.RELEASE)
+
+	    	2019-11-14 17:31:41.871  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Starting BeltReviewerApplication on MacBook-Pro-2.local with PID 95504 (/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes started by harshithamagani in /Users/harshithamagani/Desktop/spring-workspace/beltReviewer)
+	    	2019-11-14 17:31:41.871  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : No active profile set, falling back to default profiles: default
+	    	2019-11-14 17:31:42.105  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data repositories in DEFAULT mode.
+	    	2019-11-14 17:31:42.121  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 15ms. Found 3 repository interfaces.
+	    	2019-11-14 17:31:42.182  INFO 95504 --- [  restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+	    	2019-11-14 17:31:42.211  WARN 95504 --- [  restartedMain] org.apache.tomcat.util.modeler.Registry  : The MBean registry cannot be disabled because it has already been initialised
+	    	2019-11-14 17:31:42.230  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+	    	2019-11-14 17:31:42.231  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+	    	2019-11-14 17:31:42.231  INFO 95504 --- [  restartedMain] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.27]
+	    	2019-11-14 17:31:42.292  INFO 95504 --- [  restartedMain] org.apache.jasper.servlet.TldScanner     : At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+	    	2019-11-14 17:31:42.293  INFO 95504 --- [  restartedMain] o.a.c.c.C.[Tomcat-4].[localhost].[/]     : Initializing Spring embedded WebApplicationContext
+	    	2019-11-14 17:31:42.293  INFO 95504 --- [  restartedMain] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 412 ms
+	    	2019-11-14 17:31:42.344  INFO 95504 --- [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+	    	2019-11-14 17:31:42.349  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-45 - Starting...
+	    	2019-11-14 17:31:42.371  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-45 - Start completed.
+	    	2019-11-14 17:31:42.371  INFO 95504 --- [  restartedMain] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+	    	2019-11-14 17:31:42.409  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Event (class must be instantiated by Interceptor)
+	    	2019-11-14 17:31:42.417  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Message (class must be instantiated by Interceptor)
+	    	2019-11-14 17:31:42.639  INFO 95504 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+	    	2019-11-14 17:31:42.639  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:31:42.658  INFO 95504 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+	    	2019-11-14 17:31:42.851  WARN 95504 --- [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+	    	2019-11-14 17:31:42.890  INFO 95504 --- [  restartedMain] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+	    	2019-11-14 17:31:42.963  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+	    	2019-11-14 17:31:42.963  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Started BeltReviewerApplication in 1.115 seconds (JVM running for 4542.652)
+	    	2019-11-14 17:31:42.964  INFO 95504 --- [  restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+	    	2019-11-14 17:32:24.604  INFO 95504 --- [     Thread-217] o.s.s.concurrent.ThreadPoolTaskExecutor  : Shutting down ExecutorService 'applicationTaskExecutor'
+	    	2019-11-14 17:32:24.605  INFO 95504 --- [     Thread-217] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:32:24.606  INFO 95504 --- [     Thread-217] com.zaxxer.hikari.HikariDataSource       : HikariPool-45 - Shutdown initiated...
+	    	2019-11-14 17:32:24.607  INFO 95504 --- [     Thread-217] com.zaxxer.hikari.HikariDataSource       : HikariPool-45 - Shutdown completed.
+
+	    	  .   ____          _            __ _ _
+	    	 /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+	    	( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+	    	 \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+	    	  '  |____| .__|_| |_|_| |_\__, | / / / /
+	    	 =========|_|==============|___/=/_/_/_/
+	    	 :: Spring Boot ::        (v2.2.1.RELEASE)
+
+	    	2019-11-14 17:32:25.042  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Starting BeltReviewerApplication on MacBook-Pro-2.local with PID 95504 (/Users/harshithamagani/Desktop/spring-workspace/beltReviewer/target/classes started by harshithamagani in /Users/harshithamagani/Desktop/spring-workspace/beltReviewer)
+	    	2019-11-14 17:32:25.043  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : No active profile set, falling back to default profiles: default
+	    	2019-11-14 17:32:25.222  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data repositories in DEFAULT mode.
+	    	2019-11-14 17:32:25.231  INFO 95504 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 8ms. Found 3 repository interfaces.
+	    	2019-11-14 17:32:25.287  INFO 95504 --- [  restartedMain] trationDelegate$BeanPostProcessorChecker : Bean 'org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration' of type [org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying)
+	    	2019-11-14 17:32:25.316  WARN 95504 --- [  restartedMain] org.apache.tomcat.util.modeler.Registry  : The MBean registry cannot be disabled because it has already been initialised
+	    	2019-11-14 17:32:25.332  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+	    	2019-11-14 17:32:25.333  INFO 95504 --- [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+	    	2019-11-14 17:32:25.333  INFO 95504 --- [  restartedMain] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.27]
+	    	2019-11-14 17:32:25.385  INFO 95504 --- [  restartedMain] org.apache.jasper.servlet.TldScanner     : At least one JAR was scanned for TLDs yet contained no TLDs. Enable debug logging for this logger for a complete list of JARs that were scanned but no TLDs were found in them. Skipping unneeded JARs during scanning can improve startup time and JSP compilation time.
+	    	2019-11-14 17:32:25.385  INFO 95504 --- [  restartedMain] o.a.c.c.C.[Tomcat-4].[localhost].[/]     : Initializing Spring embedded WebApplicationContext
+	    	2019-11-14 17:32:25.385  INFO 95504 --- [  restartedMain] o.s.web.context.ContextLoader            : Root WebApplicationContext: initialization completed in 340 ms
+	    	2019-11-14 17:32:25.428  INFO 95504 --- [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+	    	2019-11-14 17:32:25.431  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-46 - Starting...
+	    	2019-11-14 17:32:25.464  INFO 95504 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-46 - Start completed.
+	    	2019-11-14 17:32:25.464  INFO 95504 --- [  restartedMain] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.MySQL8Dialect
+	    	2019-11-14 17:32:25.498  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Event (class must be instantiated by Interceptor)
+	    	2019-11-14 17:32:25.504  INFO 95504 --- [  restartedMain] org.hibernate.tuple.PojoInstantiator     : HHH000182: No default (no-argument) constructor for class: com.coding.dojo.models.Message (class must be instantiated by Interceptor)
+	    	2019-11-14 17:32:25.851  INFO 95504 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+	    	2019-11-14 17:32:25.852  INFO 95504 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+	    	2019-11-14 17:32:25.872  INFO 95504 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+	    	2019-11-14 17:32:25.933  WARN 95504 --- [  restartedMain] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+	    	2019-11-14 17:32:25.967  INFO 95504 --- [  restartedMain] o.s.s.concurrent.ThreadPoolTaskExecutor  : Initializing ExecutorService 'applicationTaskExecutor'
+	    	2019-11-14 17:32:26.034  INFO 95504 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+	    	2019-11-14 17:32:26.035  INFO 95504 --- [  restartedMain] com.coding.dojo.BeltReviewerApplication  : Started BeltReviewerApplication in 1.01 seconds (JVM running for 4585.722)
+	    	2019-11-14 17:32:26.036  INFO 95504 --- [  restartedMain] .ConditionEvaluationDeltaLoggingListener : Condition evaluation unchanged
+
+	    	return "showEvents.jsp";
+	    }
+}

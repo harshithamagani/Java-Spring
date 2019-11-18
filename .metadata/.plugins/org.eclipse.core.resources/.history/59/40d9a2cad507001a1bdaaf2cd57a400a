@@ -1,0 +1,19 @@
+package com.coding.dojo.models;
+
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.validation.constraints.Size;
+
+public class Idea {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	@Size(min = 1, message = "Idea content must be present!")
+	private String content;
+	
+	public Idea(String content) {
+		this.content=content;
+	}
+}

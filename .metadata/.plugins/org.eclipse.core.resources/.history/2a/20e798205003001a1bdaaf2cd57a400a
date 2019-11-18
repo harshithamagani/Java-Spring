@@ -1,0 +1,36 @@
+package com.coding.dojo.services;
+
+import java.util.List;
+
+import com.coding.dojo.models.License;
+import com.coding.dojo.models.Person;
+import com.coding.dojo.repositories.DriverRepository;
+import com.coding.dojo.repositories.LicenseRepository;
+
+public class DLService {
+
+	private final DriverRepository driverRepo;
+	private final LicenseRepository licenseRepo;
+	
+	public DLService(DriverRepository driverRepository, LicenseRepository licenseRepository){
+		this.driverRepo=driverRepository;
+		this.licenseRepo=licenseRepository;
+	}
+	
+	public Person createPerson(Person person){
+		return driverRepo.save(person);
+	}
+	
+	public License createPerson(License license){
+		return licenseRepo.save(license);
+	}
+	
+	public List<Person> getAllPersons(){
+		return (List<Person>) driverRepo.findAll();
+	}
+	
+	public List<License> getAllLicenses(){
+		return (List<License>) licenseRepo.findAll();
+	}
+	
+}

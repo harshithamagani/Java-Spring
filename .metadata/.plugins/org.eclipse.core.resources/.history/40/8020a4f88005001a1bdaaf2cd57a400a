@@ -1,0 +1,21 @@
+package com.example.demo.service;
+
+import org.springframework.stereotype.Service;
+
+import com.example.demo.repositories.DojoRepository;
+import com.example.demo.repositories.NinjaRepository;
+
+
+
+@Service
+public class DojoService {
+
+	private final NinjaRepository ninjaRepo;
+	private final DojoRepository dojoRepo;
+	
+	public DojoService() {
+		this.ninjaRepo = ninjaRepo;
+		this.dojoRepo = dojoRepo
+	}
+	
+}

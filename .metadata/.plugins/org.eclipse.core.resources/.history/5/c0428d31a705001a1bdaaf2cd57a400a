@@ -1,0 +1,32 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Dojo Details</title>
+</head>
+<body>
+	<div id="wrapper">
+		<h1>${dojo.name}</h1>
+		<table class="table">
+	  <thead>
+	    <tr>
+	      <th scope="col">#</th>
+	      <th scope="col">Name</th>
+	      <th scope="col">Ninja Count</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	  <c:forEach items="${dojos}" var="dojo">
+	  	<tr>
+	      <th scope="row">${dojo.id}</th>
+	      <td>${dojo.name}</td>
+	      <td>${fn:length(dojo.ninjas)} ninjas</td>
+	    </tr>
+	  </c:forEach>
+	  </tbody>
+	</table>
+	</div>
+</body>
+</html>

@@ -1,0 +1,5 @@
+package com.coding.dojo.models;
+
+public class Person {
+
+}

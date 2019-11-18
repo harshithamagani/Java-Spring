@@ -1,0 +1,33 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form"%>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Category Details Page</title>
+</head>
+<body>
+	<div id="wrapper">
+		<h1>${category.name}</h1>
+		<p>Products</p>
+		<c:forEach items="${category.products}" var="product">
+			<p>${product.name}</p>
+		</c:forEach>
+		
+		<form:form method="post" action="/add/category2/product">
+			<p>
+				<form:label path="product"></form:label>
+				<form:select path="product">
+					<c:forEach items="${products}" var="product">
+						<form:option value="${product.name}"></form:option>
+					</c:forEach>
+				</form:select>
+			</p>
+			<form:input type="hidden" path="category_id">${category.id}</form:input>
+			<input type="submit" value="Add">
+		</form:form>
+	</div>
+</body>
+</html>

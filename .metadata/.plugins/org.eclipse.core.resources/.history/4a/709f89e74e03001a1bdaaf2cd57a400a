@@ -1,0 +1,21 @@
+package com.coding.dojo.services;
+
+import com.coding.dojo.models.Person;
+import com.coding.dojo.repositories.DriverRepository;
+import com.coding.dojo.repositories.LicenseRepository;
+
+public class DLService {
+
+	private final DriverRepository driverReop;
+	private final LicenseRepository licenseReop;
+	
+	public DLService(DriverRepository driverRepository, LicenseRepository licenseRepository){
+		this.driverReop=driverRepository;
+		this.licenseReop=licenseRepository;
+	}
+	
+	public Person createPerson(Person person){
+		driverReop.save(person)
+	}
+	
+}

@@ -1,0 +1,15 @@
+package com.coding.dojo.models;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+
+public class GeneralSequenceNumber {
+
+	@Entity
+	public class GeneralSequenceNumber {
+	  @Id
+	  @GeneratedValue(...)
+	  private Long number;
+	}
+}

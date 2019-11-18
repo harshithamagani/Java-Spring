@@ -1,0 +1,18 @@
+package com.example.demo;
+
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@RequestMapping
+public class HomeController {
+
+	@RequestMapping("/")
+	public String indexRouteMethod() {
+		return " Hello client!How are you doing?";
+	}
+	
+	@RequestMapping("/random")
+	public String randomRouteMethod() {
+		return "Spring Boot is great! So easy to just respond with Strings!!";
+	}
+
+}

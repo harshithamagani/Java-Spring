@@ -1,0 +1,49 @@
+package com.example.demo.controllers;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.example.demo.models.Category;
+import com.example.demo.models.Product;
+import com.example.demo.services.CategoryService;
+import com.example.demo.services.ProductService;
+
+@Controller
+public class MainController {
+
+	private final CategoryService categoryService;
+	private final ProductService productService;
+	
+	public MainController(CategoryService categoryService,ProductService productService) {
+		this.categoryService=categoryService;
+		this.productService=productService;
+	}
+	
+	@RequestMapping("/new/product")
+	public String newProduct(@ModelAttribute("product")Product product){
+		return "newProduct.jsp";	
+	}
+	
+	@RequestMapping("/new/category")
+	public String newCategory(@ModelAttribute("category")Category category){
+		return "newCategory.jsp";
+	}
+	
+	@RequestMapping("/products/{id}")
+	public String showProduct(@PathVariable("id")Long id, Model model) {
+		Product product = productService.findProdById(id);
+		model.addAttribute("product", product);
+		return "";
+	}
+	
+	@RequestMapping("/post/new/product")
+	public String postProduct(@ModelAttribute("product")Product product,BindingResult result) {
+		return "";
+	}
+	
+	
+}

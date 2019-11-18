@@ -1,0 +1,5 @@
+package com.coding.dojo.repositories;
+
+public interface DriverRepository {
+
+}

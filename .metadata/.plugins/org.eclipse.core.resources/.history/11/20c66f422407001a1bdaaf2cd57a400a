@@ -1,0 +1,5 @@
+package com.coding.dojo.controllers;
+
+public class UserController {
+
+}

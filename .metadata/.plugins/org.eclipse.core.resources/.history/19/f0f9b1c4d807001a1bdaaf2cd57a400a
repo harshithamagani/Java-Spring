@@ -1,0 +1,10 @@
+package com.coding.dojo.models;
+
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "likes")
+public class Like {
+
+}

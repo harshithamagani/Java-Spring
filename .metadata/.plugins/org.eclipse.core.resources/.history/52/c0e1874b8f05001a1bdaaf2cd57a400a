@@ -1,0 +1,33 @@
+package com.exmaple.demo.controllers;
+
+import java.util.List;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.example.demo.models.Dojo;
+import com.example.demo.repositories.DojoRepository;
+
+@Controller
+public class DojoController {
+	
+	private final DojoRepository dojoRepo;
+
+	@RequestMapping("/new/dojo")
+	public String newNinja() {
+		return "newDojo.jsp";
+	}
+	
+	@RequestMapping("/")
+	public String index(Model model) {
+		List<Dojo> dojos = (List<Dojo>) dojoRepo.findAll();
+		model.addAttribute("dojos", dojo)
+		return "index.jsp"; 
+	}
+	
+	@RequestMapping(value="/post/new/ninja")
+	public String postNinja() {
+		return "redirect:/";
+	}
+}

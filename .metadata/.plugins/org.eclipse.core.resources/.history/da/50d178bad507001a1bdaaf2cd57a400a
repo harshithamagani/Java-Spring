@@ -1,0 +1,26 @@
+package com.coding.dojo.models;
+
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+
+public class Like {
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	
+	private boolean like;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="user_id")
+    private User user;
+	
+	public Like(boolean like) {
+		this.like=like;
+	}
+	
+	
+}

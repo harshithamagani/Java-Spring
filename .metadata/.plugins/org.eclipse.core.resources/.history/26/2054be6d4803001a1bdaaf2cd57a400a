@@ -1,0 +1,11 @@
+package com.coding.dojo.repositories;
+
+import java.sql.Driver;
+
+import org.springframework.data.repository.CrudRepository;
+
+import com.coding.dojo.models.License;
+
+public interface DriverRepository extends CrudRepository<Driver, Long>{
+
+}

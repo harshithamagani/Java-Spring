@@ -1,0 +1,27 @@
+package com.coding.dojo.models;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name="generalSequenceNumbers")
+public class GeneralSequenceNumber {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long number;
+	
+	
+	public GeneralSequenceNumber() {
+		
+	}
+
+
+	public Long getNumber() {
+		return number;
+	}
+
+}

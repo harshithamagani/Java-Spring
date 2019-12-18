@@ -79,8 +79,7 @@ public class UserController {
 	    	User user = userService.findUserById(user_id);
 	    	model.addAttribute("user", user);
 	    	return "homePage.jsp";
-	    }
-	    
+	    }	    
 	    
 	    @RequestMapping("/logout")
 	    public String logout(HttpSession session) {

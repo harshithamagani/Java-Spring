@@ -1,9 +1,0 @@
-package com.coding.dojo.repositories;
-
-import org.springframework.data.repository.CrudRepository;
-
-import com.coding.dojo.models.Event;
-
-public interface EventRepository extends CrudRepository<Event, Long>{
-	public Event findByState(String state);
-}
